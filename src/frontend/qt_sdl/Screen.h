@@ -36,6 +36,10 @@
 
 
 class MainWindow;
+{
+private:
+    QStringListModel model;
+}
 class EmuInstance;
 
 
@@ -143,81 +147,6 @@ protected:
     void osdUpdate();
 };
 
-
-class ScreenPanelNative : public ScreenPanel
-{
-    Q_OBJECT
-
-public:
-    explicit ScreenPanelNative(QWidget* parent);
-    virtual ~ScreenPanelNative();
-
-protected:
-    void paintEvent(QPaintEvent* event) override;
-
-private:
-    void setupScreenLayout() override;
-
-    QImage screen[2];
-    QTransform screenTrans[kMaxScreenTransforms];
-};
-
-
-class ScreenPanelGL : public ScreenPanel
-{
-    Q_OBJECT
-
-public:
-    explicit ScreenPanelGL(QWidget* parent);
-    virtual ~ScreenPanelGL();
-
-    std::optional<WindowInfo> getWindowInfo();
-
-    bool createContext();
-
-    void setSwapInterval(int intv);
-
-    void initOpenGL();
-    void deinitOpenGL();
-    void makeCurrentGL();
-    void drawScreenGL();
-
-    GL::Context* getContext() { return glContext.get(); }
-
-    void transferLayout();
-protected:
-
-    qreal devicePixelRatioFromScreen() const;
-    int scaledWindowWidth() const;
-    int scaledWindowHeight() const;
-
-    QPaintEngine* paintEngine() const override;
-
-private:
-    void setupScreenLayout() override;
-
-    std::unique_ptr<GL::Context> glContext;
-
-    GLuint screenVertexBuffer, screenVertexArray;
-    GLuint screenTexture;
-    GLuint screenShaderProgram;
-    GLuint screenShaderTransformULoc, screenShaderScreenSizeULoc;
-
-    QMutex screenSettingsLock;
-    WindowInfo windowInfo;
-
-    int lastScreenWidth = -1, lastScreenHeight = -1;
-
-    GLuint osdShader;
-    GLint osdScreenSizeULoc, osdPosULoc, osdSizeULoc;
-    GLfloat osdScaleFactorULoc;
-    GLuint osdVertexArray;
-    GLuint osdVertexBuffer;
-    std::map<unsigned int, GLuint> osdTextures;
-
-    void osdRenderItem(OSDItem* item) override;
-    void osdDeleteItem(OSDItem* item) override;
-};
 
 #endif // SCREEN_H
 
