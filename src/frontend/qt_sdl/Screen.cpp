@@ -21,6 +21,12 @@
 #include <optional>
 #include <cmath>
 
+#include <QApplication>
+#include <QListView>
+#include <QFileSystemModel>
+#include <QVBoxLayout>
+#include <QWidget>
+
 #include <QPaintEvent>
 #include <QPainter>
 #ifndef _WIN32
@@ -643,11 +649,14 @@ void ScreenPanel::osdUpdate()
 
 ScreenPanelNative::ScreenPanelNative(QWidget* parent) : ScreenPanel(parent)
 {
-    screen[0] = QImage(256, 192, QImage::Format_RGB32);
-    screen[1] = QImage(256, 192, QImage::Format_RGB32);
+    QListView* listView = new QListView(this);
+    listView->setModel(model);
+    listView->setRootIndex(model->index(QDir::"RomFilePath"())); // Display the current directory
 
-    screenTrans[0].reset();
-    screenTrans[1].reset();
+    // Set layout for the widget
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(listView);
+    setLayout(layout);
 }
 
 ScreenPanelNative::~ScreenPanelNative()
