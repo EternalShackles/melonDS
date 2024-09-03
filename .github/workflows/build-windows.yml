@@ -3,11 +3,11 @@ name: Windows
 on:
   push:
     branches:
-      - test
+      - test3
       - ci/vcpkg-update
   pull_request:
     branches:
-      - test
+      - test3
 
 jobs:
   build:
