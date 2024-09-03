@@ -36,10 +36,12 @@
 
 
 class MainWindow;
+
 {
 private:
     QStringListModel model;
 }
+
 class EmuInstance;
 
 
