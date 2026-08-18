@@ -1,5 +1,5 @@
 /*
-    Copyright 2016-2026 melonDS team
+    Copyright 2016-2025 melonDS team
 
     This file is part of melonDS.
 
@@ -40,6 +40,7 @@
 
 class EmuInstance;
 class EmuThread;
+class GameList;
 
 const int kMaxRecentROMs = 10;
 
@@ -123,7 +124,6 @@ private slots:
     void onFrameStep();
     void onOpenPowerManagement();
     void onOpenDateTime();
-    void onDateTimeDialogFinished(int res);
     void onEnableCheats(bool checked);
     void onSetupCheats();
     void onCheatsDialogFinished(int res);
@@ -187,6 +187,8 @@ private slots:
 
 private:
     virtual void closeEvent(QCloseEvent* event) override;
+
+    GameList* gameList;
 
     QStringList currentROM;
     QStringList currentGBAROM;
