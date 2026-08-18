@@ -40,7 +40,7 @@
 
 class EmuInstance;
 class EmuThread;
-class GameList;
+//class GameList;
 
 const int kMaxRecentROMs = 10;
 
@@ -188,7 +188,7 @@ private slots:
 private:
     virtual void closeEvent(QCloseEvent* event) override;
 
-    GameList* gameList;
+//    GameList* gameList;
 
     QStringList currentROM;
     QStringList currentGBAROM;
