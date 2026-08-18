@@ -41,6 +41,7 @@
 class EmuInstance;
 class EmuThread;
 class GameList;
+class QDockWidget;
 
 const int kMaxRecentROMs = 10;
 
@@ -189,6 +190,7 @@ private:
     virtual void closeEvent(QCloseEvent* event) override;
 
     GameList* gameList;
+    QDockWidget* gameListDock;
 
     QStringList currentROM;
     QStringList currentGBAROM;
