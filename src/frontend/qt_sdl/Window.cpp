@@ -1,5 +1,5 @@
 /*
-    Copyright 2016-2025 melonDS team
+    Copyright 2016-2026 melonDS team
 
     This file is part of melonDS.
 
@@ -41,13 +41,6 @@
 #include <QVector>
 #include <QCommandLineParser>
 #include <QDesktopServices>
-#ifndef _WIN32
-#include <QGuiApplication>
-#include <QSocketNotifier>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <signal.h>
-#endif
 
 #include "main.h"
 #include "CheatsDialog.h"
@@ -80,7 +73,6 @@
 #include "ArchiveUtil.h"
 #include "CameraManager.h"
 #include "Window.h"
-#include "GameList.h"
 #include "AboutDialog.h"
 
 using namespace melonDS;
@@ -214,17 +206,6 @@ static bool FileIsSupportedFiletype(const QString& filename, bool insideArchive 
 }
 
 
-#ifndef _WIN32
-static int signalFd[2];
-QSocketNotifier *signalSn;
-
-static void signalHandler(int)
-{
-    char a = 1;
-    write(signalFd[0], &a, sizeof(a));
-}
-#endif
-
 
 MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
     QMainWindow(parent),
@@ -237,26 +218,6 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
     enabledSaved(false),
     focused(true)
 {
-#ifndef _WIN32
-    if (!parent)
-    {
-        if (socketpair(AF_UNIX, SOCK_STREAM, 0, signalFd))
-        {
-            qFatal("Couldn't create socketpair");
-        }
-
-        signalSn = new QSocketNotifier(signalFd[1], QSocketNotifier::Read, this);
-        connect(signalSn, SIGNAL(activated(int)), this, SLOT(onQuit()));
-
-        struct sigaction sa;
-
-        sa.sa_handler = signalHandler;
-        sigemptyset(&sa.sa_mask);
-        sa.sa_flags = 0;
-        sa.sa_flags |= SA_RESTART;
-        sigaction(SIGINT, &sa, 0);
-    }
-#endif
 
     showOSD = windowCfg.GetBool("ShowOSD");
 
@@ -701,9 +662,6 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
     panel = nullptr;
     createScreenPanel();
 
-    gameList = new GameList(emuInstance, this);
-    setCentralWidget(gameList);
-
     if (hasMenu)
     {
         actEjectCart->setEnabled(false);
@@ -729,7 +687,7 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
         actStop->setEnabled(false);
         actFrameStep->setEnabled(false);
 
-        actDateTime->setEnabled(true);
+        //actDateTime->setEnabled(true);
         actPowerManagement->setEnabled(false);
 
         actEnableCheats->setEnabled(false);
@@ -1677,10 +1635,6 @@ void MainWindow::onImportSavefile()
 
 void MainWindow::onQuit()
 {
-#ifndef _WIN32
-    if (!parentWidget())
-        signalSn->setEnabled(false);
-#endif
     close();
 }
 
@@ -1725,6 +1679,15 @@ void MainWindow::onFrameStep()
 void MainWindow::onOpenDateTime()
 {
     DateTimeDialog* dlg = DateTimeDialog::openDlg(this);
+    connect(dlg, &DateTimeDialog::finished, this, &MainWindow::onDateTimeDialogFinished);
+}
+
+void MainWindow::onDateTimeDialogFinished(int res)
+{
+    if (!res) return;
+    if (!emuThread->emuIsActive()) return;
+
+    emuInstance->setDateTime();
 }
 
 void MainWindow::onOpenPowerManagement()
@@ -2240,8 +2203,6 @@ void MainWindow::onEmuStart()
 {
     if (!hasMenu) return;
 
-    setCentralWidget(panel);
-
     for (int i = 1; i < 9; i++)
     {
         actSaveState[i]->setEnabled(true);
@@ -2257,7 +2218,7 @@ void MainWindow::onEmuStart()
     actStop->setEnabled(true);
     actFrameStep->setEnabled(true);
 
-    actDateTime->setEnabled(false);
+    //actDateTime->setEnabled(false);
     actPowerManagement->setEnabled(true);
 
     actTitleManager->setEnabled(false);
@@ -2266,8 +2227,6 @@ void MainWindow::onEmuStart()
 void MainWindow::onEmuStop()
 {
     if (!hasMenu) return;
-
-    setCentralWidget(gameList);
 
     for (int i = 0; i < 9; i++)
     {
@@ -2281,7 +2240,7 @@ void MainWindow::onEmuStop()
     actStop->setEnabled(false);
     actFrameStep->setEnabled(false);
 
-    actDateTime->setEnabled(true);
+    //actDateTime->setEnabled(true);
     actPowerManagement->setEnabled(false);
 
     actTitleManager->setEnabled(!globalCfg.GetString("DSi.NANDPath").empty());
