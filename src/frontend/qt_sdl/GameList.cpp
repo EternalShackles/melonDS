@@ -22,6 +22,8 @@
 #include "NDSCart.h"
 #include "NDS_Header.h"
 
+#include <memory>
+
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
