@@ -80,7 +80,7 @@
 #include "ArchiveUtil.h"
 #include "CameraManager.h"
 #include "Window.h"
-#include "GameList.h"
+//#include "GameList.h"
 #include "AboutDialog.h"
 
 using namespace melonDS;
