@@ -44,6 +44,9 @@
 #ifndef _WIN32
 #include <QGuiApplication>
 #include <QSocketNotifier>
+
+#include <QDockWidget>
+
 #include <unistd.h>
 #include <sys/socket.h>
 #include <signal.h>
@@ -80,7 +83,7 @@
 #include "ArchiveUtil.h"
 #include "CameraManager.h"
 #include "Window.h"
-#include "GameList.h"
+#include ".h"
 #include "AboutDialog.h"
 
 using namespace melonDS;
@@ -702,6 +705,11 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
     createScreenPanel();
 
     gameList = new GameList(emuInstance, this);
+    
+    gameListDock = new QDockWidget("Games", this);
+    gameListDock->setWidget(gameList);
+
+    addDockWidget(Qt::RightDockWidgetArea, gameListDock);
     //setCentralWidget(gameList);
 
     if (hasMenu)
