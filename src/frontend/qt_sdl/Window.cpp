@@ -45,8 +45,6 @@
 #include <QGuiApplication>
 #include <QSocketNotifier>
 
-#include <QDockWidget>
-
 #include <unistd.h>
 #include <sys/socket.h>
 #include <signal.h>
@@ -84,6 +82,7 @@
 #include "CameraManager.h"
 #include "Window.h"
 #include "GameList.h"
+#include <QDockWidget>
 #include "AboutDialog.h"
 
 using namespace melonDS;
