@@ -19,10 +19,7 @@
 #include "GameList.h"
 
 #include "EmuInstance.h"
-#include "NDSCart.h"
 #include "NDS_Header.h"
-
-#include <memory>
 
 #include <QDir>
 #include <QFile>
@@ -171,46 +168,99 @@ void GameList::addGame(const QString& filename)
 
     const qint64 fileSize = file.size();
 
-    /*
-     * For this first implementation we use melonDS's existing ROM parser.
-     *
-     * ParseROM() creates a CartCommon containing the parsed NDS header and
-     * banner, so we don't need to duplicate the NDS header parsing here.
-     */
     if (fileSize <= 0 || fileSize > 0x40000000LL)
         return;
 
-    std::unique_ptr<u8[]> romData(new u8[fileSize]);
+    /*
+     * The NDS header is exactly 4096 bytes.
+     *
+     * This gives us everything needed for:
+     *
+     * - GameTitle
+     * - ROMVersion
+     * - CardSize
+     * - BannerOffset
+     */
+    NDSHeader header;
 
-    if (file.read(reinterpret_cast<char*>(romData.get()), fileSize) != fileSize)
+    if (file.read(
+            reinterpret_cast<char*>(&header),
+            sizeof(NDSHeader)
+        ) != sizeof(NDSHeader))
+    {
         return;
+    }
 
-    file.close();
+    /*
+     * We only need the beginning of the banner.
+     *
+     * NDSBanner layout:
+     *
+     * 0x000 - Header information
+     * 0x020 - Icon
+     * 0x220 - Palette
+     * 0x240 - Japanese title
+     * 0x340 - English title
+     * 0x440 - End of English title
+     *
+     * Therefore 0x440 bytes is enough for:
+     *
+     * - Icon
+     * - Palette
+     * - Japanese title
+     * - English title
+     *
+     * The remaining banner data is not needed by GameList.
+     */
+    constexpr qint64 BannerReadSize = 0x440;
 
-    std::unique_ptr<NDSCart::CartCommon> cart =
-        NDSCart::ParseROM(
-            std::move(romData),
-            static_cast<u32>(fileSize)
-        );
+    NDSBanner banner{};
+    bool hasBanner = false;
 
-    if (!cart)
-        return;
+    if (header.BannerOffset != 0 &&
+        static_cast<qint64>(header.BannerOffset) + BannerReadSize <= fileSize)
+    {
+        if (file.seek(header.BannerOffset))
+        {
+            if (file.read(
+                    reinterpret_cast<char*>(&banner),
+                    BannerReadSize
+                ) == BannerReadSize)
+            {
+                hasBanner = true;
+            }
+        }
+    }
 
-    const NDSHeader& header = cart->GetHeader();
-    const NDSBanner* banner = cart->Banner();
-
+    /*
+     * Game name.
+     *
+     * Prefer the English banner title, matching the existing behavior.
+     *
+     * If the English title is empty, use the Japanese banner title.
+     * This handles Japanese-only titles without reading any additional
+     * part of the ROM.
+     */
     QString gameName;
 
-    if (banner)
+    if (hasBanner)
     {
         gameName = QString::fromUtf16(
-            banner->EnglishTitle
+            banner.EnglishTitle
         ).trimmed();
+
+        if (gameName.isEmpty())
+        {
+            gameName = QString::fromUtf16(
+                banner.JapaneseTitle
+            ).trimmed();
+        }
     }
 
     /*
      * Some homebrew or unusual ROMs may not have a usable banner title.
-     * Fall back to the header title.
+     *
+     * Fall back to the title stored directly in the NDS header.
      */
     if (gameName.isEmpty())
     {
@@ -222,12 +272,16 @@ void GameList::addGame(const QString& filename)
         gameName = headerTitle.trimmed();
     }
 
+    /*
+     * Final fallback: use the filename.
+     */
     if (gameName.isEmpty())
     {
         gameName = QFileInfo(filename).completeBaseName();
     }
 
     const int row = table->rowCount();
+
     table->insertRow(row);
 
     /*
@@ -235,13 +289,13 @@ void GameList::addGame(const QString& filename)
      */
     QTableWidgetItem* iconItem = new QTableWidgetItem();
 
-    if (banner)
+    if (hasBanner)
     {
         u32 iconData[32 * 32];
 
         emuInstance->romIcon(
-            banner->Icon,
-            banner->Palette,
+            banner.Icon,
+            banner.Palette,
             iconData
         );
 
@@ -274,7 +328,9 @@ void GameList::addGame(const QString& filename)
         );
 
     /*
-     * Actual .nds file size
+     * Actual .nds file size.
+     *
+     * QFile::size() gives this without reading the ROM.
      */
     QTableWidgetItem* fileSizeItem =
         new QTableWidgetItem(
@@ -289,11 +345,9 @@ void GameList::addGame(const QString& filename)
     /*
      * ROM size from the NDS header.
      *
-     * NDS CardSize is expressed as:
+     * CardSize is expressed as:
      *
      *     128 KB << CardSize
-     *
-     * melonDS's NDSHeader exposes the raw CardSize field.
      */
     const qint64 romSize =
         128LL * 1024LL * (1LL << header.CardSize);
@@ -308,6 +362,9 @@ void GameList::addGame(const QString& filename)
         romSize
     );
 
+    /*
+     * Add all five columns.
+     */
     table->setItem(row, 0, iconItem);
     table->setItem(row, 1, nameItem);
     table->setItem(row, 2, versionItem);
