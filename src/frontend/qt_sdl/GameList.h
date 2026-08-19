@@ -36,6 +36,7 @@ public:
 
 private slots:
     void onOpenFolder();
+    void onGameDoubleClicked(int row, int column);
 
 private:
     void addGame(const QString& filename);
