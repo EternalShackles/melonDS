@@ -100,6 +100,9 @@ GameList::GameList(EmuInstance* instance, QWidget* parent)
     table->setIconSize(QSize(32, 32));
     table->verticalHeader()->setDefaultSectionSize(48);
 
+    connect(table, &QTableWidget::cellDoubleClicked,
+        this, &GameList::onGameDoubleClicked);
+
     table->horizontalHeader()->setSectionResizeMode(
         0, QHeaderView::ResizeToContents
     );
