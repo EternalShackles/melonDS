@@ -89,6 +89,10 @@ GameList::GameList(EmuInstance* instance, QWidget* parent)
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    connect(table, &QTableWidget::cellDoubleClicked,
+        this, &GameList::onGameDoubleClicked);
+    
     table->setAlternatingRowColors(true);
     table->setSortingEnabled(true);
     table->verticalHeader()->setVisible(false);
@@ -319,6 +323,8 @@ void GameList::addGame(const QString& filename)
     QTableWidgetItem* nameItem =
         new QTableWidgetItem(gameName);
 
+    nameItem->setData(Qt::UserRole, filename);
+
     /*
      * Version
      */
@@ -370,4 +376,22 @@ void GameList::addGame(const QString& filename)
     table->setItem(row, 2, versionItem);
     table->setItem(row, 3, fileSizeItem);
     table->setItem(row, 4, romSizeItem);
+}
+
+void GameList::onGameDoubleClicked(int row, int column)
+{
+    Q_UNUSED(column);
+
+    QTableWidgetItem* item = table->item(row, 1);
+
+    if (!item)
+        return;
+
+    const QString filename =
+        item->data(Qt::UserRole).toString();
+
+    if (filename.isEmpty())
+        return;
+
+    emuInstance->loadGameFromGameList(filename);
 }
