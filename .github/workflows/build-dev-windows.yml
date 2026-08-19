@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - test-2
+      - just-list
 
 env:
   MELONDS_GIT_BRANCH: ${{ github.ref }}
