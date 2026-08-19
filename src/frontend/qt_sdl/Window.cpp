@@ -704,6 +704,28 @@ MainWindow::MainWindow(int id, EmuInstance* inst, QWidget* parent) :
     createScreenPanel();
 
     gameList = new GameList(emuInstance, this);
+
+    connect(gameList, &GameList::gameDoubleClicked,
+            this, [this](const QString& filename)
+    {
+        QStringList file;
+        file << filename;
+
+        QString errorstr;
+
+        if (!emuThread->bootROM(file, errorstr))
+        {
+            QMessageBox::critical(this, "melonDS", errorstr);
+            return;
+        }
+
+        QString recentFilename = file.join('|');
+        recentFileList.removeAll(recentFilename);
+        recentFileList.prepend(recentFilename);
+        updateRecentFilesMenu();
+
+        updateCartInserted(false);
+    });
     
     gameListDock = new QDockWidget("Games", this);
     gameListDock->setWidget(gameList);
