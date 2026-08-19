@@ -116,6 +116,8 @@ public:
     bool emuIsActive();
     void emuStop(melonDS::Platform::StopReason reason);
 
+    bool loadGameFromGameList(const QString& filepath);
+
     bool usesOpenGL();
     void initOpenGL(int win);
     void deinitOpenGL(int win);
