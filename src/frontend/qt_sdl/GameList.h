@@ -34,6 +34,9 @@ public:
 
     void scanDirectory(const QString& path);
 
+signals:
+    void gameDoubleClicked(const QString& filename);
+
 private slots:
     void onOpenFolder();
     void onGameDoubleClicked(int row, int column);
