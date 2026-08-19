@@ -715,6 +715,24 @@ bool EmuInstance::savestateExists(int slot)
     return Platform::FileExists(ssfile);
 }
 
+bool EmuInstance::loadGameFromGameList(const QString& filepath)
+{
+    QStringList filepathList;
+    filepathList << filepath;
+
+    QString errorstr;
+
+    if (!loadROM(filepathList, true, errorstr))
+    {
+        if (!errorstr.isEmpty())
+            osdAddMessage(0xFFFFFFFF, "%s", errorstr.toUtf8().constData());
+
+        return false;
+    }
+
+    return true;
+}
+
 bool EmuInstance::loadState(const std::string& filename)
 {
     Platform::FileHandle* file = Platform::OpenFile(filename, Platform::FileMode::Read);
